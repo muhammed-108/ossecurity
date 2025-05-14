@@ -1,0 +1,114 @@
+1.5 File Permission Hardening Practice
+1.5.1 Setting File Permissions and Ownership
+Linux treats all objects as files. Even a directory is regarded as a large file containing
+multiple other files. Therefore, file and directory security is essential to Linux. The security
+of files and directories is ensured by permissions and ownership.
+In openEuler, permissions and ownership for common directories, executable files, and
+configuration files are set by default.
+Take the /bin directory as an example. To change the file permission and ownership,
+perform the following steps:
+Step 1 Modify the file permission. For example, set the permission on the /bin directory to
+755.
+chmod 755 /bin
+Step 2 Change the file ownership. For example, set the owner and group of the /bin
+directory to root:root.
+chown root:root /bin
+
+
+1.5.2 Deleting Unowned Files
+When deleting a user or group, the system administrator may forget to delete the files
+owned by the user or group. If there is a new user or group with an identical name to
+that of the user or group to be deleted, the new user or group will own some files that
+do not belong to them. Therefore, you are advised to delete these files.
+⚫ Deleting files whose user IDs do not exist
+Step 1 Search for files whose user IDs do not exist.
+find / -nouser
+Step 2 Delete the found files. In the command, filename indicates the name of a file
+whose user ID does not exist.
+rm -f filename
+⚫ Deleting files whose group IDs do not exist
+Step 3 Search for files whose group IDs do not exist.
+find / -nogroup
+Step 4 Delete the found files. In the command, filename indicates the name of a file
+whose group ID does not exist.
+rm -f filename
+
+1.5.3 Deleting Link Files Pointing to Deleted Files
+Link files pointing to deleted files may be exploited by malicious users, deteriorating
+system security. You are advised to delete those files to improve system security.
+After openEuler is installed, link files pointing to deleted files may exist, and these files
+may have corresponding functions. (Some of them are preconfigured and may be
+depended on by other components.)
+Step 1 Run the following command to search for link files pointing to deleted files:
+find dirname -type l -follow 2>/dev/null
+dirname is the name of the directory to be searched. Pay special attention to key
+directories /bin, /boot, /usr, /lib64, /lib, and /var.
+Step 2 If such files are useless, run the following command to delete them. In the
+command, filename is the name of a link file pointing to deleted files.
+rm -f filename
+
+1.5.4 Adding the Sticky Bit Property for Globally Writable
+Directories
+Any user can delete or modify files and directories in globally writable directories. To
+prevent those files and directories from being arbitrarily deleted, add the sticky bit
+property for the globally writable directories.
+Step 1 Find globally writable directories.
+find / -type d -perm -0002 ! -perm -1000 -ls | grep -v proc
+Step 2 Add the sticky bit property for globally writable directories. Replace dirname with
+the actual directory name.
+chmod +t dirname
+
+1.5.5 Disabling Global Write on Unauthorized Files
+Globally writable files can be modified by any user in a system, which impacts system
+integrity.
+Step 1 Display all globally writable files.
+for i in `find / -type d -perm -o+w | grep -v proc`;do ls -ld $i | awk '{print $1,$NF}';done
+for i in `find / -type f -perm -o+w | grep -v proc`;do ls -l $i | awk '{print $1,$NF}';done
+Step 2 View all listed files, exclude files and directories with sticky bits, and delete files or
+remove their global write permission. In the command, filename indicates the
+corresponding file name.
+chmod o-w filename
+
+1.5.6 Restricting Permissions to Run at Commands
+at commands are used to create tasks that are automatically executed at a specific time
+point. To prevent users from arbitrarily running at commands, you need to specify users
+who can use the at commands. Otherwise, the system may be vulnerable to attacks.
+Step 1 Delete the /etc/at.deny file.
+rm -f /etc/at.deny
+Step 2 Create the /etc/at.allow file.
+touch /etc/at.allow
+
+Step 3 Change the owner of the /etc/at.allow file to root:root.
+chown root:root /etc/at.allow
+Step 4 Control the permission on the /etc/at.allow file. Only the root user can perform
+this operation.
+chmod og-rwx /etc/at.allow
+
+1.5.7 Restricting Permissions to Run cron Commands
+cron commands are used to create routine tasks. To prevent users from arbitrarily
+running cron commands, you need to specify users who can use the cron commands.
+Otherwise, the system may be vulnerable to attacks.
+Step 1 Delete the /etc/cron.deny file.
+rm -f /etc/cron.deny
+Step 2 Create the /etc/cron.allow file.
+touch /etc/cron.allow
+Step 3 Change the owner of the /etc/cron.allow file to root:root.
+chown root:root /etc/cron.allow
+Step 4 Control the permission on the /etc/cron.allow file. Only the root user can perform
+this operation.
+chmod og-rwx /etc/cron.allow
+
+1.5.8 Restricting Permissions to Run sudo Commands
+sudo commands are used by a common user with the root permission. To enhance
+system security, it is necessary to control the permission to use sudo commands. Only the
+root user is allowed to execute sudo commands. By default, openEuler does not restrict
+the permission of non-root users to execute sudo commands.
+You can modify the /etc/sudoers file to control the use of sudo commands. Comment
+out the following configuration line:
+#%wheel ALL=(ALL) ALL
+
+
+
+
+
+
