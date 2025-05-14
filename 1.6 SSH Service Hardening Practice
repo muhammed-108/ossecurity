@@ -1,0 +1,91 @@
+The SSH protocol can effectively prevent information leakage during remote
+management.
+⚫ All hardening items of the SSH service are stored in the /etc/ssh/sshd_config file.
+⚫ The configuration that has been commented out in the file is the default openEuler
+policy.
+⚫ After the configuration is modified, restart the SSH service for the modification to
+take effect.
+[root@Jumpserver ~]# systemctl restart sshd
+
+
+1.6.1 Limiting the Number of Identity Authentication Attempts
+It is a good way to mitigate brute force attacks by limiting the maximum number of
+authentication failures.
+code : 
+MaxAuthTries 3
+If a user fails to enter the correct password for three consecutive times when logging in
+to the OS, the user will be locked for 60 seconds. 
+
+1.6.2 Forbidding Login Using Accounts with Empty Passwords
+Any SSH connection requires a non-null password string.
+PermitEmptyPasswords no
+1.6.3 Disabling Password-Free Login Based on Trusted Hosts
+The rhosts file is a method of controlling the trust relationship between systems. If a
+system trusts another system, the system allows login from the trusted system without a
+password.
+This file is seldom used. It is recommended that you disable it in most cases.
+IgnoreRhosts yes
+1.6.4 Displaying the Date and Time of the Last Login
+By printing the date and time of the last login, users can be aware of unauthorized
+account login events, which will facilitate investigation of unidentified accesses.
+PrintLastLog yes
+The last login time of the user is displayed as follows.
+
+1.6.5 Terminating Idle SSH Sessions
+Keeping SSH sessions active for a long time may cause security risks. It is recommended
+that idle SSH sessions be terminated.
+ClientAliveInterval 900
+ClientAliveCountMax 0
+Inactive sessions are automatically disconnected after 15 minutes (900 seconds).
+
+
+1.6.6 Listening to a Specific Address
+By default, SSH listens to all IP addresses configured on the local host, but you should
+bind SSH to a specific IP address.
+ListenAddress 192.168.0.48
+1.6.7 Configuring the SSH Blocklist
+Users in the DenyUsers list are not allowed to log in.
+DenyUsers $username
+By default, users not listed in the blocklist are considered trustlist users. Blocklist and
+trustlist users cannot exist at the same time.
+1.6.8 Disabling Login of the Root User
+Forcing users to remotely log in to the system using specific accounts ensures
+accountability.
+PermitRootLogin no
+The root user is not allowed to remotely log in to the system, and a common user is not
+allowed to switch to the root user.
+
+1.6.9 Allowing Login Through Key Authentication
+Key authentication remembers passwords and allows for password-free authentication.
+PubkeyAuthentication yes
+
+Step 1 Generate a local key.
+ssh-keygen
+
+Step 2 View the key and modify the permission.
+[root@Jumpserver ~]# ls .ssh/
+id_rsa id_rsa.pub known_hosts known_hosts.old
+[root@Jumpserver ~]# chmod 600 ~/.ssh/id_rsa
+[root@Jumpserver ~]# chmod 600 ~/.ssh/id_rsa.pub
+[root@Jumpserver ~]# chmod 700 ~/.ssh
+Step 3 Upload the public key to the server.
+[root@Jumpserver ~]# cd .ssh/
+[root@Jumpserver .ssh]# ssh-copy-id -i id_rsa.pub root@192.168.0.49
+Step 4 View the public key and verify the result.
+[root@Server ~]# ls -l .ssh/
+total 12
+-rw------- 1 root root 569 May 15 06:45 authorized_keys
+-rw------- 1 root root 834 May 15 03:07 known_hosts
+-rw-r--r-- 1 root root 94 May 15 03:06 known_hosts.old
+
+
+1.6.10 Disabling Password Authentication Login
+After a public key is used for login authentication, do not use a password to log in to the
+system to prevent password leakage. This policy applies only to the intranet web server.
+PasswordAuthentication no
+
+1.7 Quiz
+⚫ Can a common user switch to the root user after the root user is forbidden from
+remote login during SSHD service hardening?
+Answer: Yes.
+
