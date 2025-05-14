@@ -1,0 +1,101 @@
+1.3.1 Configuring a Warning for Remote Network Access
+The warning is used to warn users before logging in to a system, telling that they may be
+punished for illegal intrusion to deter potential attackers. In addition, this can also hide
+system architecture and information to prevent targeted attacks on the system.
+You can modify the /etc/issue.net file to implement this setting. Replace the original
+content of the /etc/issue.net file with the following information (which has been set in
+openEuler by default):
+Authorized users only. All activities may be monitored and reported.
+1.3.2 Disabling System Restart Using Ctrl+Alt+Del
+By default, the OS can be restarted by pressing "Ctrl+Alt+Del". You are advised to disable
+this function to prevent data loss caused by misoperations.
+To disable this function, perform the following steps:
+Step 1 Delete the two ctrl-alt-del.target files.
+
+[root@Jumpserver ~]# rm -f /etc/systemd/system/ctrl-alt-del.target
+[root@Jumpserver ~]# rm -f /usr/lib/systemd/system/ctrl-alt-del.target
+Step 2 Modify the /etc/systemd/system.conf file.
+Change #CtrlAltDelBurstAction=reboot-force to CtrlAltDelBurstAction=none.
+Step 3 Restart systemd for the modification to take effect.
+[root@Jumpserver ~]# systemctl daemon-reexec
+
+
+1.3.3 Setting the Automatic Timeout for Terminals
+Unattended devices are prone to listening or attacks. Therefore, you are advised to set
+terminals to automatically exit after they stop running for a period of time.
+At the end of the /etc/profile file, set the TMOUT field (unit: second) that specifies the
+interval for automatic exit as follows:
+export TMOUT=300
+
+
+
+1.3.4 Setting the Default User's umask Value to 0077
+The umask value is used to set the default permission on a newly created file or
+directory. If the umask value is too small, the permission of group users or other users is
+too high, which threatens system security. Therefore, the default umask value for all
+users is set to 0077. That is, the default permission on directories created by users is 700,
+and the default permission on files is 600.
+By default, the default user's umask value in openEuler is 0022.
+Step 1 Add umask 0077 to the /etc/bashrc file and all files in /etc/profile.d/.
+[root@Jumpserver ~]# echo "umask 0077" >> /etc/bashrc
+[root@Jumpserver ~]# for i in `ls /etc/profile.d`;do echo "umask 0077" >> $i;done
+Step 2 Set the owner and group of the /etc/bashrc file and all files in /etc/profile.d/ to
+root.
+$FILE indicates the file name, for example, /etc/bashrc.
+
+
+1.3.5 Setting the Encryption Password of GRUB2
+The default password of GRUB2 is openEuler#12. You are advised to change the default
+password upon the first login and periodically update the password. If the password is
+leaked, startup item configurations may be modified, causing the system startup failure.
+Step 1 Use the grub2-mkpasswd-pbkdf2 command to generate an encrypted password.
+[root@Jumpserver ~]# grub2-mkpasswd-pbkdf2
+Enter password: 
+Reenter password:
+PBKDF2 hash of your password is
+grub.pbkdf2.sha512.10000.011476329D0DCD1DE1758B7F19BC275BB60CC6C3DF1082BFB812D249112
+484E7E7C084E6687A957BB91B40F0A8860E78872AACB89F277EB7D68DC2BD86D34E13.B29208FBE27
+1A702ECA14CCB518C165F86564EED56D277434A289948C2504C5AAB73DFCF8E87B160525953DFC51
+A57B3A17CE4452E2DD6BB0FAC1A0F36120FB4
+
+Step 2 Add the following fields to the /etc/grub2.cfg file:
+[root@Jumpserver ~]# vi /etc/grub2.cfg
+set superusers="root"
+password_pbkdf2 root
+grub.pbkdf2.sha512.10000.011476329D0DCD1DE1758B7F19BC275BB60CC6C3DF1082BFB812D249112
+484E7E7C084E6687A957BB91B40F0A8860E78872AACB89F277EB7D68DC2BD86D34E13.B29208FBE27
+1A702ECA14CCB518C165F86564EED56D277434A289948C2504C5AAB73DFCF8E87B160525953DFC51
+A57B3A17CE4452E2DD6BB0FAC1A0F36120FB4
+The superusers field is used to set the account name of the super GRUB2 administrator.
+The first parameter following the password_pbkdf2 field is the GRUB2 account name,
+and the second parameter is the encrypted password of the account.
+1.3.6 Resetting the Root Password
+Step 1 Restart the system and go to the GRUB screen.
+Restart the openEuler system. When the GUN GRUB screen is displayed, press e to modify
+the startup command of the system.
+Enter the user name root and the encrypted GRUB2 password to go to the startup
+command modification screen.
+
+Step 2 Add the rd.break parameter to enter the single-user mode.
+Find the line starting with "linux" and add rd.break to the end of the line.
+Press CTRL+x to enable the single-user mode.
+
+Step 3 Remount the root directory.
+Remount the root directory (/sysroot) in writable mode and switch to this environment.
+sh-5.1# mount -o remount, rw /sysroot
+sh-5.1# chroot /sysroot
+Step 4 Reset the password of the root user.
+sh-5.1# echo "Huawei@123" | passwd --stdin root
+sh-5.1# exit
+sh-5.1# reboot
+
+
+
+
+
+
+
+
+
+
+
